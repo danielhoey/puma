@@ -650,6 +650,15 @@ module Puma
       @notify << message
     rescue IOError, NoMethodError, Errno::EPIPE, Errno::EBADF
       # The server, in another thread, is shutting down
+      
+      if message == STOP_COMMAND
+        threads.each do |t|
+          if t.inspect =~ /sleep_forever/
+            $stdout.syswrite "#{pid}: Terminate #{t.inspect}\n"
+            t.terminate
+          end
+        end
+      end
     rescue RuntimeError => e
       # Temporary workaround for https://bugs.ruby-lang.org/issues/13239
       if e.message.include?('IOError')
